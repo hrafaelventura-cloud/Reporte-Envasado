@@ -8,40 +8,49 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Reporte Envasado</title>
 
-    <!-- Manifest Interno Mejorado -->
-    <link rel="manifest" href='data:application/manifest+json,{"name":"Reporte Envasado","short_name":"Reporte","start_url":"/Reporte-Envasado/index.html","display":"standalone","background_color":"#f4f7f6","theme_color":"#0984e3","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/4345/4345573.png","sizes":"512x512","type":"image/png"}]}'>
+    <!-- Manifest Interno para Pantalla Completa -->
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Reporte Envasado","short_name":"Reporte","start_url":"index.html","display":"standalone","background_color":"#f4f7f6","theme_color":"#0984e3","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/4345/4345573.png","sizes":"512x512","type":"image/png"}]}'>
 
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3436; --primary: #0984e3; --stop: #d63031; --start: #00b894; --accent: #636e72; --border: #dfe6e9; }
-        body.dark-mode { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333333; }
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3436; --primary: #0984e3; --stop: #d63031; --start: #00b894; --border: #dfe6e9; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
         .container { max-width: 500px; margin: auto; background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .timer-display { background: var(--border); font-size: 3rem; font-family: monospace; font-weight: bold; text-align: center; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .timer-display { background: #dfe6e9; font-size: 3rem; font-family: monospace; font-weight: bold; text-align: center; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         .btn-main { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; margin-bottom: 10px; }
         .btn-iniciar { background: var(--start); }
         .btn-detener { background: var(--stop); }
         .form-group { margin-top: 15px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 6px; box-sizing: border-box; background: var(--card); color: var(--text); }
-        .footer-credit { text-align: center; font-size: 0.7rem; color: var(--accent); margin-top: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+        th { background: #f1f1f1; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2 style="text-align: center; color: var(--primary);">Reporte Envasado V45</h2>
+    <h2 style="text-align: center; color: var(--primary);">Reporte Envasado V46</h2>
     <div class="timer-display" id="reloj">00:00:00</div>
     <button id="btnControl" class="btn-main btn-iniciar" onclick="controlarCronometro()">▶ INICIAR PARADA</button>
 
     <div class="form-group">
         <label>Supervisor</label>
-        <input type="text" id="supervisor" placeholder="Nombre del supervisor...">
+        <input type="text" id="supervisor" placeholder="Tu nombre...">
     </div>
 
     <div class="form-group">
         <label>Máquina</label>
-        <input type="text" id="maquina" list="lista-maquinas" placeholder="Selecciona máquina...">
-        <datalist id="lista-maquinas">
-            <option value="Llenadora PET 1"><option value="Llenadora PET 2"><option value="Etiquetadora Vidrio"><option value="Codificador"><option value="Kister">
-        </datalist>
+        <input type="text" id="maquina" placeholder="Ej: Llenadora PET">
+    </div>
+
+    <div class="form-group">
+        <label>Área</label>
+        <select id="area">
+            <option value="">-- Selecciona --</option>
+            <option value="Envasado Vidrio">Envasado Vidrio</option>
+            <option value="Envasado PET">Envasado PET</option>
+            <option value="Soplado">Soplado</option>
+        </select>
     </div>
 
     <div class="form-group">
@@ -49,14 +58,23 @@
         <textarea id="motivo" rows="2"></textarea>
     </div>
 
-    <button class="btn-main" style="background: var(--primary); margin-top: 20px;" onclick="alert('Datos guardados localmente')">💾 REGISTRAR</button>
-    <div class="footer-credit">Humberto - 2026</div>
+    <button class="btn-main" style="background: var(--primary); margin-top: 20px;" onclick="registrarParada()">💾 REGISTRAR PARADA</button>
+
+    <div id="historial">
+        <h3>Historial Local</h3>
+        <table id="tablaRegistros">
+            <thead>
+                <tr><th>Fecha</th><th>Máquina</th><th>Tiempo</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 </div>
 
 <script>
     let tiempoInicio, tiempoTranscurrido = 0, intervalo, enEjecucion = false;
 
-    // Registrar Service Worker "Dummy" para activar instalación
+    // Activar instalación
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('data:text/javascript;base64,' + btoa("self.addEventListener('fetch', (e) => {});"));
@@ -72,17 +90,29 @@
                 tiempoTranscurrido = Date.now() - tiempoInicio;
                 document.getElementById("reloj").innerText = formatearTiempo(tiempoTranscurrido);
             }, 100);
-            btn.innerText = "⏹ DETENER"; btn.className = "btn-main btn-detener";
+            btn.innerText = "⏹ DETENER PARADA"; btn.className = "btn-main btn-detener";
         } else {
             enEjecucion = false;
             clearInterval(intervalo);
-            btn.innerText = "▶ INICIAR"; btn.className = "btn-main btn-iniciar";
+            btn.innerText = "▶ INICIAR PARADA"; btn.className = "btn-main btn-iniciar";
         }
     }
 
     function formatearTiempo(ms) {
         let s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60);
         return [h, m%60, s%60].map(v => v.toString().padStart(2, '0')).join(':');
+    }
+
+    function registrarParada() {
+        const registro = {
+            fecha: new Date().toLocaleDateString(),
+            maquina: document.getElementById("maquina").value,
+            tiempo: document.getElementById("reloj").innerText
+        };
+        const tbody = document.querySelector("#tablaRegistros tbody");
+        const fila = `<tr><td>${registro.fecha}</td><td>${registro.maquina}</td><td>${registro.tiempo}</td></tr>`;
+        tbody.innerHTML += fila;
+        alert("Parada registrada en el historial local.");
     }
 </script>
 </body>
