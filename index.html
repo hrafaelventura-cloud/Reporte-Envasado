@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0984e3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Reporte Envasado V44 - PWA</title>
+
+    <!-- Configuración para que se comporte como App -->
+    <link rel="manifest" href="data:application/manifest+json,{'name':'Reporte V44','short_name':'ReporteV44','start_url':'.','display':'standalone','background_color':'#f4f7f6','theme_color':'#0984e3'}" >
+
+    <style>
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3436; --primary: #0984e3; --stop: #d63031; --start: #00b894; --accent: #636e72; --border: #dfe6e9; --warning: #fdcb6e; --excel: #1f7244; --media: #6c5ce7; --video: #e84393; }
+        body.dark-mode { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333333; --accent: #b2bec3; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; transition: 0.3s; overflow-x: hidden; }
+        .container { max-width: 500px; margin: auto; background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); box-sizing: border-box; }
+        
+        .timer-display { background: var(--border); font-size: 3.5rem; font-family: monospace; font-weight: bold; text-align: center; padding: 15px; border-radius: 10px; margin-bottom: 15px; color: var(--text); }
+        .btn-main { width: 100%; padding: 18px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; color: white; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
+        .btn-iniciar { background: var(--start); }
+        .btn-detener { background: var(--stop); }
+        .btn-reset { background: var(--warning); color: #2d3436; }
+        
+        .media-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+        .upload-label { padding: 14px 5px; border-radius: 6px; font-weight: bold; color: white; cursor: pointer; font-size: 0.85rem; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .btn-foto { background: var(--media); }
+        .btn-video { background: var(--video); }
+        .btn-galeria { background: var(--accent); grid-column: span 2; }
+        input[type="file"] { display: none; }
+
+        #archivoSeleccionado { font-size: 0.75rem; color: var(--primary); margin-top: 8px; font-style: italic; text-align: center; display: block; font-weight: bold; min-height: 1.2em; }
+
+        .form-group { margin-top: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 6px; box-sizing: border-box; font-size: 1rem; background: var(--card); color: var(--text); }
+        .total-banner { background: #2d3436; color: white; text-align: center; padding: 15px; margin-top: 20px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; }
+        .table-wrapper { overflow-x: auto; width: 100%; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { padding: 8px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+        .btn-whatsapp { background: #25D366; }
+        .btn-excel { background: var(--excel); }
+        .dark-toggle { float: right; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
+        .footer-credit { text-align: center; font-size: 0.75rem; color: var(--accent); margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <button class="dark-toggle" onclick="toggleDarkMode()">🌓</button>
+    <h2 style="text-align: center; margin-top: 0; color: var(--primary);">Reporte Crítico</h2>
+    
+    <div class="timer-display" id="reloj">00:00:00</div>
+    
+    <button id="btnControl" class="btn-main btn-iniciar" onclick="controlarCronometro()">▶ INICIAR PARADA</button>
+
+    <div class="form-group">
+        <label>Supervisor</label>
+        <input type="text" id="supervisor" list="lista-supervisores" placeholder="Escribe o selecciona...">
+        <datalist id="lista-supervisores"></datalist>
+    </div>
+
+    <div class="form-group">
+        <label>Máquina</label>
+        <input type="text" id="maquina" list="lista-maquinas" placeholder="Escribe o selecciona...">
+        <datalist id="lista-maquinas">
+            <option value="Codificador PET"><option value="Codificador Vidrio"><option value="Conveyor"><option value="Dimac"><option value="Empacadora #1"><option value="Enjuagadora PET #1"><option value="Enjuagadora PET #2"><option value="Enjuagadora Vidrio"><option value="Etiquetadora PET #1"><option value="Etiquetadora PET #2"><option value="Etiquetadora Vidrio #1"><option value="Etiquetadora Vidrio #2"><option value="Etiquetadora Vidrio #3"><option value="Horno Six-Pack Cartón"><option value="Kister"><option value="Lavadora #1"><option value="Lavadora #2"><option value="Llenadora H&K"><option value="Llenadora PET #1"><option value="Llenadora PET #2"><option value="Pasteurizador #1"><option value="Pasteurizador #2"><option value="Plastificadora de Plataforma #1"><option value="Plastificadora de Plataforma #2"><option value="Posimat"><option value="Six-Pack Cartón"><option value="SMI">
+        </datalist>
+    </div>
+
+    <div class="form-group">
+        <label>Área</label>
+        <select id="area">
+            <option value="">-- Seleccionar --</option>
+            <option value="Mecánica">Mecánica</option>
+            <option value="Eléctrica">Eléctrica</option>
+            <option value="Operativa">Operativa</option>
+            <option value="Calidad">Calidad</option>
+            <option value="Utilidades">Utilidades</option>
+        </select>
+    </div>
+    <div class="form-group"><label>Motivo</label><textarea id="motivo" rows="2"></textarea></div>
+    
+    <div class="form-group">
+        <label>Evidencia de Parada</label>
+        <div class="media-grid">
+            <label class="upload-label btn-foto">📸 FOTO <input type="file" id="inputFoto" accept="image/*" capture="environment" onchange="actualizarNombreArchivo(this)"></label>
+            <label class="upload-label btn-video">🎥 VIDEO <input type="file" id="inputVideo" accept="video/*" capture="environment" onchange="actualizarNombreArchivo(this)"></label>
+            <label class="upload-label btn-galeria">📁 GALERÍA <input type="file" id="inputGaleria" accept="image/*,video/*" onchange="actualizarNombreArchivo(this)"></label>
+        </div>
+        <span id="archivoSeleccionado">Sin archivo seleccionado</span>
+    </div>
+
+    <button class="btn-main" style="background: var(--primary); margin-top: 20px;" onclick="registrarDato()">💾 REGISTRAR Y ENVIAR</button>
+    <button class="btn-main btn-reset" onclick="limpiarFormulario()">🧹 LIMPIAR FORMULARIO</button>
+
+    <div class="total-banner" id="bannerTotal">Total Pérdida: 00:00:00</div>
+    <div class="table-wrapper">
+        <table><thead><tr><th>Máquina</th><th>Hora</th><th>Duración</th></tr></thead><tbody id="listaHistorial"></tbody></table>
+    </div>
+    
+    <button class="btn-main btn-whatsapp" style="margin-top: 15px;" onclick="enviarWhatsAppConsolidado()">📱 ENVIAR RESUMEN DÍA</button>
+    <button class="btn-main btn-excel" onclick="exportarExcel()">📊 EXPORTAR A EXCEL</button>
+    
+    <button class="btn-main btn-detener" style="margin-top: 20px; font-size: 0.8rem; padding: 12px;" onclick="borrarHistorialCompleto()">🗑️ BORRAR TODO EL HISTORIAL</button>
+    
+    <div class="footer-credit">Desarrollado por: <strong>Humberto</strong></div>
+</div>
+
+<script>
+    // Registro de Service Worker para funcionamiento Offline
+    if ('serviceWorker' in navigator) {
+        const sw = 'data:text/javascript;base64,' + btoa("self.addEventListener('fetch', (event) => { event.respondWith(fetch(event.request).catch(() => caches.match(event.request))); });");
+        navigator.serviceWorker.register(sw);
+    }
+
+    let tiempoInicio, tiempoTranscurrido = 0, intervalo, enEjecucion = false;
+    let paradas = JSON.parse(localStorage.getItem("historial_v42")) || [];
+    let yaRegistrado = false; 
+    let horaInicioTexto = "--:--:--", horaFinTexto = "--:--:--";
+
+    window.onload = () => { 
+        const hoy = new Date().toLocaleDateString();
+        const fechaGuardada = localStorage.getItem("fecha_ultimo_uso");
+        if (fechaGuardada && fechaGuardada !== hoy) {
+            paradas = [];
+            localStorage.setItem("historial_v42", JSON.stringify(paradas));
+        }
+        localStorage.setItem("fecha_ultimo_uso", hoy);
+        dibujarTabla(); 
+        cargarSugerencias();
+        if(localStorage.getItem("last_sup")) document.getElementById("supervisor").value = localStorage.getItem("last_sup");
+    };
+
+    function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+    function obtenerHoraActual() { return new Date().toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', second: '2-digit'}); }
+
+    function controlarCronometro() {
+        const btn = document.getElementById("btnControl");
+        if (!enEjecucion) {
+            if (tiempoTranscurrido === 0) { horaInicioTexto = obtenerHoraActual(); }
+            enEjecucion = true; 
+            tiempoInicio = Date.now() - tiempoTranscurrido;
+            intervalo = setInterval(() => { 
+                tiempoTranscurrido = Date.now() - tiempoInicio; 
+                document.getElementById("reloj").innerText = formatearTiempo(tiempoTranscurrido); 
+            }, 100);
+            btn.innerText = "⏹ DETENER"; btn.className = "btn-main btn-detener";
+        } else { 
+            enEjecucion = false; 
+            clearInterval(intervalo); 
+            horaFinTexto = obtenerHoraActual();
+            btn.innerText = "▶ REANUDAR"; btn.className = "btn-main btn-iniciar"; 
+        }
+    }
+
+    function formatearTiempo(ms) {
+        if (!ms || ms < 0) return "00:00:00";
+        let s = Math.floor(ms/1000), m = Math.floor(s/60), h = Math.floor(m/60);
+        return [h, m%60, s%60].map(v => v.toString().padStart(2, '0')).join(':');
+    }
+
+    function cargarSugerencias() {
+        const supList = document.getElementById("lista-supervisores");
+        const supervisoresUnicos = [...new Set(paradas.map(p => p.supervisor))].filter(x => x);
+        supList.innerHTML = supervisoresUnicos.map(s => `<option value="${s}">`).join("");
+    }
+
+    function actualizarNombreArchivo(input) {
+        if (input.files && input.files[0]) {
+            const ids = ['inputFoto', 'inputVideo', 'inputGaleria'];
+            ids.forEach(id => { if(id !== input.id) document.getElementById(id).value = ""; });
+            const tipo = input.files[0].type.includes('video') ? "🎥 Video" : "📸 Foto";
+            document.getElementById('archivoSeleccionado').innerText = `✅ ${tipo} cargado: ` + input.files[0].name;
+        }
+    }
+
+    function registrarDato() {
+        if (enEjecucion) return alert("⚠️ Detenga el cronómetro primero.");
+        if (tiempoTranscurrido < 1000) return alert("⚠️ Inicie el cronómetro primero.");
+        const sup = document.getElementById("supervisor").value;
+        const maq = document.getElementById("maquina").value || "N/A";
+        const area = document.getElementById("area").value;
+        const mot = document.getElementById("motivo").value;
+        if (!sup || !area || !mot) return alert("⚠️ Llene Supervisor, Área y Motivo.");
+
+        if (!yaRegistrado) {
+            const d = { maquina: maq, area: area, tiempoTexto: document.getElementById("reloj").innerText, milisegundos: tiempoTranscurrido, supervisor: sup, motivo: mot, horaInicio: horaInicioTexto, horaFin: horaFinTexto };
+            paradas.push(d);
+            localStorage.setItem("historial_v42", JSON.stringify(paradas));
+            localStorage.setItem("last_sup", sup);
+            dibujarTabla();
+            cargarSugerencias();
+            yaRegistrado = true; 
+        }
+        const archivoFinal = document.getElementById("inputFoto").files[0] || 
+                             document.getElementById("inputVideo").files[0] || 
+                             document.getElementById("inputGaleria").files[0];
+
+        enviarWhatsApp(`*REPORTE DE PARADA*\n👤 Sup: ${sup}\n⚙️ Máq: ${maq}\n📍 Área: ${area}\n🕒 Inicio: ${horaInicioTexto}\n🛑 Fin: ${horaFinTexto}\n⏱ Duración: ${document.getElementById("reloj").innerText}\n📝 Motivo: ${mot}`, archivoFinal);
+    }
+
+    async function enviarWhatsApp(texto, archivo) {
+        if (archivo && navigator.share) {
+            try { await navigator.share({ text: texto, files: [archivo] }); return; } catch(e) {}
+        }
+        window.location.href = `whatsapp://send?text=${encodeURIComponent(texto)}`;
+    }
+
+    function exportarExcel() {
+        if (paradas.length === 0) return alert("No hay datos.");
+        let csvContent = "Supervisor,Maquina,Area,Motivo,Inicio,Fin,Duracion\n";
+        paradas.forEach(p => {
+            let m = p.motivo.replace(/,/g, ".");
+            csvContent += `${p.supervisor},${p.maquina},${p.area},${m},${p.horaInicio},${p.horaFin},${p.tiempoTexto}\n`;
+        });
+        const universalBOM = "\uFEFF";
+        const blob = new Blob([universalBOM + csvContent], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Reporte_Envasado_${new Date().toLocaleDateString()}.csv`);
+        link.click();
+    }
+
+    function dibujarTabla() {
+        const lista = document.getElementById("listaHistorial"); lista.innerHTML = ""; let suma = 0;
+        paradas.forEach(p => { suma += (Number(p.milisegundos) || 0); lista.innerHTML += `<tr><td>${p.maquina}</td><td>${p.horaInicio}</td><td>${p.tiempoTexto}</td></tr>`; });
+        document.getElementById("bannerTotal").innerText = "Total Pérdida: " + formatearTiempo(suma);
+    }
+
+    function enviarWhatsAppConsolidado() {
+        if (paradas.length === 0) return alert("No hay datos.");
+        const hoy = new Date().toLocaleDateString();
+        let m = `*CONSOLIDADO DÍA - ${hoy}*\n👤 Sup: ${document.getElementById("supervisor").value}\n\n`;
+        paradas.forEach((p, i) => { m += `${i+1}. *${p.maquina}*\n   ⏱ ${p.tiempoTexto}\n   📝 Motivo: ${p.motivo}\n\n`; });
+        m += `*${document.getElementById("bannerTotal").innerText.toUpperCase()}*`;
+        enviarWhatsApp(m, null);
+    }
+
+    function borrarHistorialCompleto() {
+        if(confirm("🚨 ¿Desea borrar TODO el historial acumulado hoy? Esto no se puede deshacer.")) {
+            paradas = [];
+            localStorage.setItem("historial_v42", JSON.stringify(paradas));
+            dibujarTabla();
+            cargarSugerencias();
+            alert("Historial limpio.");
+        }
+    }
+
+    function limpiarFormulario() {
+        if(confirm("¿Limpiar para nueva parada?")) {
+            tiempoTranscurrido = 0; document.getElementById("reloj").innerText = "00:00:00";
+            document.getElementById("motivo").value = ""; document.getElementById("maquina").value = "";
+            document.getElementById("inputFoto").value = ""; document.getElementById("inputVideo").value = ""; document.getElementById("inputGaleria").value = "";
+            document.getElementById("archivoSeleccionado").innerText = "Sin archivo seleccionado";
+            document.getElementById("btnControl").innerText = "▶ INICIAR PARADA";
+            document.getElementById("btnControl").className = "btn-main btn-iniciar"; yaRegistrado = false;
+        }
+    }
+</script>
+</body>
+</html>
